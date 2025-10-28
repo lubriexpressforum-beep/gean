@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Fluxo Lubri Express</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Variáveis CSS para Cores */
+        :root {
+            --cor-card-fundo: rgba(9, 46, 74, 0.85); /* Azul Chumbo Semi-transparente */
+            --cor-texto-claro: #f0f0f0;     
+            --cor-texto-principal: #ffffff; 
+            --cor-sucesso: #27ae60;         
+            --cor-input-fundo: rgba(255, 255, 255, 0.1); 
+            --cor-dourado: #FFD700; 
+            --cor-sombra: rgba(0, 0, 0, 0.2); 
+            --cor-copyright: rgba(255, 255, 255, 0.5); 
+            --cor-alerta: #dc3545; /* Vermelho forte para ação final */
+            --cor-detalhe-claro: #1f5a89; /* Cor para detalhes do histórico/configurações */
+            --cor-botao-settings: #5c6770; /* Cinza para configurações */
+            /* NOVA COR PARA CALCULADORA INDIVIDUAL */
+            --cor-individual: #e67e22; /* Laranja/Cobre */
+        }
+
+        /* Estilos Globais e Background da Logo */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-image: url('img/LB-3d.png'); 
+            background-size: contain; 
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-attachment: fixed;
+            background-color: #f8f8f8; 
+            display: flex;
+            flex-direction: column; 
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--cor-texto-claro);
+        }
+        
+        /* Estilo para a Data */
+        #dataAtual {
+            color: var(--cor-texto-principal);
+            font-size: 1.1em;
+            font-weight: 500;
+            margin-bottom: 15px;
+            padding: 5px 10px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            z-index: 10;
+        }
+
+        /* Container Principal (Card) */
+        .container {
+            background-color: var(--cor-card-fundo);
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 5px 25px var(--cor-sombra); 
+            max-width: 380px; 
+            width: 100%;
+            z-index: 10;
+        }
+
+        /* Título Centralizado */
+        h1 { text-align: center; color: var(--cor-texto-principal); margin-bottom: 25px; font-size: 1.5em; line-height: 1.2; font-weight: 600; }
+        .marca-lubri { color: var(--cor-dourado); font-weight: 700; }
+        .marca-express { color: var(--cor-texto-principal); font-weight: 700; }
+        .descricao-fluxo { display: block; font-size: 0.8em; font-weight: 400; opacity: 0.8; margin-top: 5px; }
+
+        /* Inputs (Estilos de fusão) */
+        input[type="text"], input[type="number"] {
+            padding: 10px 12px;
+            width: calc(100% - 24px); 
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.3); 
+            background-color: rgba(255, 255, 255, 0.1); 
+            color: var(--cor-texto-principal); 
+            box-sizing: border-box;
+            font-size: 1em;
+            margin: 0;
+            transition: background-color 0.2s;
+        }
+        input:focus { border-color: var(--cor-sucesso); background-color: rgba(255, 255, 255, 0.2); box-shadow: none; outline: none; }
+        .input-group label { display: block; margin-bottom: 5px; font-size: 0.9em; opacity: 0.8; }
+        #valorBaseLabel { display: none; }
+
+        /* Máscara de Input (quando oculto) */
+        input[type="text"].oculto-input { color: transparent !important; text-shadow: 0 0 8px rgba(255, 255, 255, 0.5); }
+        input[type="text"].oculto-input::placeholder { color: var(--cor-dourado); opacity: 1; }
+        
+        /* Destaque para o Input Individual */
+        .input-group-individual {
+            border-top: 2px dashed var(--cor-individual);
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+        .input-group-individual label {
+            color: var(--cor-individual); 
+            font-weight: 600;
+        }
+        #valorBaseIndividual { 
+            border: 2px solid var(--cor-individual); 
+            margin-top: 5px;
+        }
+        #ajusteValorIndividual {
+            border-left: 5px solid var(--cor-individual);
+        }
+
+        /* Botões */
+        .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+        .btn-group button { padding: 12px; cursor: pointer; border: none; border-radius: 4px; font-size: 1em; font-weight: 600; transition: background-color 0.2s ease; }
+        
+        /* Botão Calcular */
+        button.calculate-btn { background-color: var(--cor-sucesso); color: white; width: calc(50% - 5px); }
+        button.calculate-btn:hover { background-color: #219653; }
+
+        /* Botão Fechamento de Dia (VERMELHO) */
+        button.close-day-btn { background-color: var(--cor-alerta); color: white; width: calc(50% - 5px); }
+        button.close-day-btn:hover { background-color: #c82333; }
+
+        /* Botões Secundários */
+        button.secondary-btn { background-color: var(--cor-detalhe-claro); color: var(--cor-texto-principal); margin-top: 10px; width: calc(33.33% - 6.66px); }
+        button.secondary-btn:hover { background-color: #144061; }
+        
+        /* Botão Configurações */
+        button.settings-btn { background-color: var(--cor-botao-settings); color: var(--cor-texto-principal); margin-top: 10px; width: calc(33.33% - 6.66px); }
+        button.settings-btn:hover { background-color: #4b5259; }
+
+        /* Botão Individual */
+        button.individual-btn { background-color: var(--cor-individual); color: var(--cor-texto-principal); margin-top: 10px; width: calc(33.33% - 6.66px); }
+        button.individual-btn:hover { background-color: #d35400; }
+
+        /* Área de Resultado */
+        #resultado-wrapper { margin-top: 25px; } 
+        .resultado-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px; margin-bottom: 10px; }
+        .resultado-header h2 { margin: 0; font-size: 1.1em; font-weight: 600; color: var(--cor-dourado); }
+        #resultado p { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; margin: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        #resultado p:last-of-type { border-bottom: none; }
+        
+        /* Destaque para o Total */
+        .total-sistema {
+            color: var(--cor-alerta);
+            font-weight: 700;
+        }
+
+        /* Toggle Blur */
+        .oculto .valor-exibir { filter: blur(4px); transition: filter 0.3s ease; user-select: none; color: transparent; text-shadow: 0 0 4px var(--cor-texto-principal); }
+
+        /* Estilos do Modal (Configurações e Histórico) */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background-color: var(--cor-card-fundo); padding: 20px; border-radius: 10px; width: 90%; max-width: 450px; max-height: 80vh; overflow-y: auto; box-shadow: 0 5px 30px rgba(0, 0, 0, 0.5); }
+        .modal-content h3 { color: var(--cor-dourado); margin-top: 0; border-bottom: 2px solid var(--cor-detalhe-claro); padding-bottom: 10px; margin-bottom: 15px; }
+        .close-btn { float: right; font-size: 24px; font-weight: bold; color: var(--cor-texto-principal); cursor: pointer; line-height: 1; transition: color 0.2s; }
+        .close-btn:hover { color: var(--cor-alerta); }
+        
+        /* Estilos de Configurações */
+        #settings-modal .input-group { margin-bottom: 15px; }
+        #settings-modal input[type="number"] { width: calc(100% - 24px); }
+        #settings-modal p { font-size: 0.9em; opacity: 0.8; color: var(--cor-texto-claro); margin-top: 0; }
+
+        /* Estilos da Calculadora Individual */
+        #individual-modal .modal-content { border-top: 5px solid var(--cor-individual); }
+        #individual-resultado p {
+             font-size: 1.5em;
+             font-weight: 700;
+             color: var(--cor-individual);
+             background-color: rgba(255, 255, 255, 0.1);
+             padding: 15px;
+             border-radius: 5px;
+             text-align: center;
+             display: block;
+        }
+
+        /* Copyright Footer */
+        .copyright { text-align: center; margin-top: 30px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.75em; color: var(--cor-copyright); }
+    </style>
+</head>
+<body onload="carregarValoresSalvos(); carregarConfiguracoes(); exibirDataAtual(); applyVisibilityPreference()">
+
+    <div id="dataAtual"></div>
+
+    <div class="container">
+        <h1>
+            <span class="marca-lubri">Lubri</span><span class="marca-express"> Express</span>
+            <span class="descricao-fluxo">Fluxo de Ajuste e Comissionamento</span>
+        </h1>
+        
+        <div class="input-group">
+            <label for="valorBase" id="valorBaseLabel">Valor Inicial</label>
+            <input type="text" id="valorBase" placeholder="Valor Inicial (Base Empresa)" oninput="formatarMoedaInput(this)">
+        </div>
+
+        <div class="input-group">
+            <label for="ajusteValor">Valor de Ajuste (Base Empresa)</label>
+            <input type="text" id="ajusteValor" placeholder="Ajuste do Dia (Entrada ou Saída)" oninput="formatarMoedaInput(this)" autocomplete="off">
+        </div>
+        
+        <hr style="border-color: rgba(255, 255, 255, 0.1); margin: 20px 0;">
+        
+        <div class="input-group input-group-individual">
+            <label for="valorBaseIndividual" id="labelBaseIndividual">
+                <i class="fas fa-user-tag"></i> Base de Cálculo Gean
+            </label>
+            <input type="text" id="valorBaseIndividual" placeholder="Valor Base Gean" oninput="formatarMoedaInput(this)">
+        </div>
+        
+        <div class="input-group">
+            <label for="ajusteValorIndividual" style="color: var(--cor-individual); font-weight: 500;" id="labelAjusteIndividual">
+                <i class="fas fa-hand-holding-usd"></i> Ajuste da Base Gean
+            </label>
+            <input type="text" id="ajusteValorIndividual" placeholder="Ajuste Gean (Entrada ou Saída)" oninput="formatarMoedaInput(this)" autocomplete="off">
+        </div>
+        
+        <div class="btn-group">
+            <button class="calculate-btn" onclick="calcular()">Calcular e Atualizar</button>
+            <button class="close-day-btn" onclick="salvarPDFeFecharDia()">Fechar Dia</button>
+            
+            <button class="secondary-btn" onclick="abrirHistorico()">
+                <i class="fas fa-calendar-alt"></i> Histórico
+            </button>
+            <button class="settings-btn" onclick="abrirConfiguracoes()">
+                <i class="fas fa-cogs"></i> Configurações
+            </button>
+            <button class="individual-btn" onclick="abrirCalculadoraIndividual()">
+                <i class="fas fa-user-circle"></i> <span id="btnNomeIndividual">Comissão Gean</span> 
+            </button>
+        </div>
+
+        <div id="resultado-wrapper">
+            <div class="resultado-header">
+                <h2>Cálculos Recentes</h2>
+                <button class="toggle-btn" id="toggleButton" onclick="toggleResultVisibility()" aria-label="Ocultar valores"> 
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+            
+            <div id="resultado">
+                <p>Insira os valores e clique em "Calcular".</p>
+            </div>
+        </div>
+
+        <div class="copyright">
+            &copy; 2025 Lubri Express. Todos os direitos reservados.
+        </div>
+    </div>
+
+    <div id="historico-modal" class="modal" onclick="fecharModalExterno(event, 'historico-modal')">
+        <div class="modal-content">
+            <span class="close-btn" onclick="fecharModal('historico-modal')">&times;</span>
+            <h3>Histórico de Fechamentos</h3>
+            <div id="historico-lista"></div>
+            <button class="close-day-btn" style="width: 100%; margin-top: 15px;" onclick="limparHistoricoPermanente()">Limpar Histórico Permanente</button>
+        </div>
+    </div>
+    
+    <div id="settings-modal" class="modal" onclick="fecharModalExterno(event, 'settings-modal')">
+        <div class="modal-content">
+            <span class="close-btn" onclick="fecharModal('settings-modal')">&times;</span>
+            <h3>Configurações do Fluxo</h3>
+            
+            <p>Os valores alterados serão salvos no seu navegador.</p>
+
+            <div class="input-group">
+                <label for="taxaComissaoInput">Taxa de Comissão Total (%) para Colaboradores 1 e 2</label>
+                <input type="number" id="taxaComissaoInput" placeholder="Ex: 15" min="0" step="0.01">
+            </div>
+            
+            <div class="input-group">
+                <label for="nomeColaborador1Input">Nome do Colaborador 1</label>
+                <input type="text" id="nomeColaborador1Input" placeholder="Colaborador 1">
+            </div>
+
+            <div class="input-group">
+                <label for="nomeColaborador2Input">Nome do Colaborador 2</label>
+                <input type="text" id="nomeColaborador2Input" placeholder="Colaborador 2">
+            </div>
+            
+            <div class="input-group">
+                <label for="nomeColaboradorIndividualInput">Seu Nome (Comissão 20% Fixa)</label>
+                <input type="text" id="nomeColaboradorIndividualInput" placeholder="Seu Nome">
+            </div>
+            
+            <p style="font-style: italic; opacity: 0.9;">**A comissão total será dividida igualmente entre o Colaborador 1 e o Colaborador 2.</p>
+            
+            <button class="calculate-btn" style="width: 100%; margin-top: 15px;" onclick="salvarConfiguracoes()">Salvar Configurações</button>
+        </div>
+    </div>
+    
+    <div id="individual-modal" class="modal" onclick="fecharModalExterno(event, 'individual-modal')">
+        <div class="modal-content">
+            <span class="close-btn" onclick="fecharModal('individual-modal')">&times;</span>
+            <h3 style="color: var(--cor-individual);"><i class="fas fa-calculator"></i> Comissão <span id="individual-nome-modal">Calculando...</span></h3>
+            
+            <p style="font-size: 0.9em; opacity: 0.9;">
+                O cálculo abaixo usa a **Base de Cálculo <span id="modal-nome-base"></span>** atualizada e aplica sua comissão fixa de **20%**.
+            </p>
+
+            <div id="individual-resultado">
+                <p>Calculando...</p>
+            </div>
+            
+            <p style="font-size: 0.8em; opacity: 0.7; margin-top: 15px;">
+                Valor Base usado no cálculo: <span id="individual-base-valor">R$ 0,00</span>
+            </p>
+        </div>
+    </div>
+
+
+    <script>
+        // --- VARIÁVEIS DE PERSISTÊNCIA E CONFIGURAÇÃO ---
+        const CHAVE_BASE = 'calcBase';
+        const CHAVE_BASE_INDIVIDUAL = 'calcBaseIndividual'; 
+        const CHAVE_VISIBILIDADE = 'calcVisivel'; 
+        const CHAVE_HISTORICO = 'calcHistoricoFechamentos'; 
+        const CHAVE_CONFIGURACOES = 'calcConfiguracoes'; 
+        const TAXA_COMISSAO_GEAN = 0.20; // 20% fixo para o cálculo individual
+        
+        let settings = {}; 
+
+        // NOVO: REFERÊNCIAS GLOBAIS DE DOM (Otimização)
+        const $inputBase = document.getElementById('valorBase');
+        const $inputAjuste = document.getElementById('ajusteValor');
+        const $inputBaseIndividual = document.getElementById('valorBaseIndividual');
+        const $inputAjusteIndividual = document.getElementById('ajusteValorIndividual');
+        const $resultadoWrapper = document.getElementById('resultado-wrapper');
+        const $resultadoDiv = document.getElementById('resultado');
+        const $toggleButton = document.getElementById('toggleButton');
+        const $closeDayBtn = document.querySelector('.close-day-btn'); // Pega o botão de fechar dia
+
+        // --- FUNÇÕES DE UTILIDADE E FORMATAÇÃO ---
+        
+        /** Formata o número para a moeda BRL. */
+        function formatarMoeda(valor) {
+            // Garante que NaN, null ou undefined virem 0 para evitar problemas de formatação.
+            if (typeof valor !== 'number' || !isFinite(valor)) {
+                valor = 0;
+            }
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+        }
+        
+        /** Formata o input em tempo real como moeda (R$ 0,00). */
+        function formatarMoedaInput(input) {
+            let value = input.value.replace(/\D/g, ''); 
+            const isNegative = input.value.includes('-');
+
+            if (value.length === 0) {
+                input.value = '';
+                return;
+            }
+
+            const number = parseInt(value, 10) / 100;
+            let formatted = formatarMoeda(number);
+            
+            if (isNegative) {
+                 formatted = '-' + formatted.replace('-', '');
+            }
+            
+            input.value = formatted;
+        }
+
+        /** Converte o valor de moeda (string formatada) para float. */
+        function parseMoedaParaFloat(stringMoeda) {
+            if (!stringMoeda) return 0;
+            let valorLimpo = stringMoeda.replace(/[R$\.]/g, '');
+            valorLimpo = valorLimpo.replace(',', '.');
+            return parseFloat(valorLimpo) || 0;
+        }
+
+        /** Exibe a data atual formatada e a retorna. */
+        function exibirDataAtual() {
+            const data = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dataFormatada = data.toLocaleDateString('pt-BR', options);
+            const dataFinal = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
+            
+            const elemento = document.getElementById('dataAtual');
+            elemento.textContent = dataFinal;
+            
+            return dataFinal; // Retorna a data formatada
+        }
+
+        // --- FUNÇÕES DE MODAL E CÁLCULO INDIVIDUAL ---
+        
+        function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
+        function fecharModalExterno(event, id) {
+            const modal = document.getElementById(id);
+            if (event.target === modal) { fecharModal(id); }
+        }
+        
+        function abrirHistorico() {
+            document.getElementById('historico-modal').style.display = 'flex';
+            exibirHistorico();
+        }
+        
+        function abrirConfiguracoes() {
+            const modal = document.getElementById('settings-modal');
+            
+            // Preenche os inputs do modal com as configurações atuais
+            document.getElementById('taxaComissaoInput').value = (settings.taxaComissao * 100).toFixed(2);
+            document.getElementById('nomeColaborador1Input').value = settings.nomeColaborador1;
+            document.getElementById('nomeColaborador2Input').value = settings.nomeColaborador2;
+            document.getElementById('nomeColaboradorIndividualInput').value = settings.nomeColaboradorIndividual;
+            
+            modal.style.display = 'flex';
+        }
+
+        function abrirCalculadoraIndividual() {
+            // Pega o Novo Valor Base do campo INDIVIDUAL (já é o valor atualizado)
+            const valorBaseIndividual = parseMoedaParaFloat($inputBaseIndividual.value); // Usa $inputBaseIndividual
+            
+            document.getElementById('individual-nome-modal').textContent = settings.nomeColaboradorIndividual;
+            document.getElementById('modal-nome-base').textContent = settings.nomeColaboradorIndividual;
+
+            if (valorBaseIndividual === 0) {
+                document.getElementById('individual-resultado').innerHTML = 
+                    `<p style='color: var(--cor-individual); font-size: 1.2em;'>Base ${settings.nomeColaboradorIndividual} está zerada.</p>`;
+                document.getElementById('individual-base-valor').textContent = formatarMoeda(0);
+            } else {
+                const comissaoIndividual = valorBaseIndividual * TAXA_COMISSAO_GEAN;
+                
+                document.getElementById('individual-resultado').innerHTML = `
+                    <p>Comissão ${settings.nomeColaboradorIndividual} (20%): ${formatarMoeda(comissaoIndividual)}</p>
+                `;
+                document.getElementById('individual-base-valor').textContent = formatarMoeda(valorBaseIndividual);
+            }
+            
+            document.getElementById('individual-modal').style.display = 'flex';
+        }
+
+        // --- FUNÇÕES DE CONFIGURAÇÕES ---
+        
+        /** Atualiza os elementos da interface com o nome individual configurado. */
+        function atualizarNomeIndividualUI() {
+            const nome = settings.nomeColaboradorIndividual;
+            document.getElementById('btnNomeIndividual').textContent = `Comissão ${nome}`;
+            document.getElementById('labelBaseIndividual').innerHTML = `<i class="fas fa-user-tag"></i> Base de Cálculo ${nome}`;
+            document.getElementById('labelAjusteIndividual').innerHTML = `<i class="fas fa-hand-holding-usd"></i> Ajuste da Base ${nome}`;
+            // Também ajusta o placeholder do input de base
+            const inputBaseIndividual = $inputBaseIndividual; // Usa $inputBaseIndividual
+            if (!inputBaseIndividual.classList.contains('oculto-input')) {
+                inputBaseIndividual.placeholder = `Valor Base ${nome}`;
+            }
+            $inputAjusteIndividual.placeholder = `Ajuste ${nome} (Entrada ou Saída)`; // Usa $inputAjusteIndividual
+        }
+
+        function carregarConfiguracoes() {
+            const defaultSettings = {
+                taxaComissao: 0.15, 
+                nomeColaborador1: 'Ezequiel',
+                nomeColaborador2: 'Henrique',
+                nomeColaboradorIndividual: 'Gean' 
+            };
+            
+            const savedSettingsString = localStorage.getItem(CHAVE_CONFIGURACOES);
+            const savedSettings = savedSettingsString ? JSON.parse(savedSettingsString) : {};
+            
+            // Garantia de robustez: Mescla as configurações salvas com as padrão.
+            settings = { ...defaultSettings, ...savedSettings };
+            
+            // NOVO: Atualiza os nomes na interface imediatamente após carregar as configs
+            atualizarNomeIndividualUI();
+        }
+
+        function salvarConfiguracoes() {
+            const taxa = parseFloat(document.getElementById('taxaComissaoInput').value) / 100;
+            const nome1 = document.getElementById('nomeColaborador1Input').value.trim();
+            const nome2 = document.getElementById('nomeColaborador2Input').value.trim();
+            const nomeIndividual = document.getElementById('nomeColaboradorIndividualInput').value.trim();
+
+            if (isNaN(taxa) || taxa <= 0 || !nome1 || !nome2 || !nomeIndividual) {
+                alert("Por favor, preencha todos os campos de configuração corretamente.");
+                return;
+            }
+
+            settings.taxaComissao = taxa;
+            settings.nomeColaborador1 = nome1;
+            settings.nomeColaborador2 = nome2;
+            settings.nomeColaboradorIndividual = nomeIndividual;
+
+            localStorage.setItem(CHAVE_CONFIGURACOES, JSON.stringify(settings));
+
+            // NOVO: Atualiza a interface com o novo nome
+            atualizarNomeIndividualUI();
+            
+            alert("Configurações salvas com sucesso!");
+            fecharModal('settings-modal');
+            calcular();
+        }
+
+        // --- FUNÇÕES DE VISIBILIDADE E PERSISTÊNCIA ---
+        
+        function toggleResultVisibility() {
+            // Usa as referências globais
+            const isOculto = $resultadoWrapper.classList.toggle('oculto');
+            
+            const icon = isOculto ? 'fa-eye-slash' : 'fa-eye';
+            
+            // A11Y e Atualização do Ícone
+            $toggleButton.innerHTML = `<i class="fas ${icon}"></i>`;
+            $toggleButton.setAttribute('aria-label', isOculto ? 'Exibir valores' : 'Ocultar valores');
+            
+            localStorage.setItem(CHAVE_VISIBILIDADE, !isOculto); 
+            carregarValoresSalvos(); 
+        }
+
+        function applyVisibilityPreference() {
+            const savedPreference = localStorage.getItem(CHAVE_VISIBILIDADE);
+            const isVisible = savedPreference === null || savedPreference === 'true'; 
+            
+            // Usa as referências globais
+            if (!isVisible) {
+                 $resultadoWrapper.classList.add('oculto');
+                 $toggleButton.innerHTML = `<i class="fas fa-eye-slash"></i>`;
+                 // A11Y
+                 $toggleButton.setAttribute('aria-label', 'Exibir valores');
+            } else {
+                 $resultadoWrapper.classList.remove('oculto');
+                 $toggleButton.innerHTML = `<i class="fas fa-eye"></i>`;
+                 // A11Y
+                 $toggleButton.setAttribute('aria-label', 'Ocultar valores');
+            }
+        }
+        
+        /** Carrega os Valores Iniciais salvos e aplica formatação/máscara. */
+        function carregarValoresSalvos() {
+            const valorBaseSalvo = localStorage.getItem(CHAVE_BASE);
+            const valorBaseIndividualSalvo = localStorage.getItem(CHAVE_BASE_INDIVIDUAL);
+            
+            // Usa as referências globais
+            const inputBase = $inputBase;
+            const inputAjuste = $inputAjuste;
+            const inputBaseIndividual = $inputBaseIndividual;
+            const inputAjusteIndividual = $inputAjusteIndividual;
+            
+            const isVisible = localStorage.getItem(CHAVE_VISIBILIDADE) === null || localStorage.getItem(CHAVE_VISIBILIDADE) === 'true';
+            
+            // Certifique-se de que as configurações foram carregadas antes de usar 'settings'
+            if (Object.keys(settings).length === 0) {
+                carregarConfiguracoes();
+            }
+
+            let valorBase = valorBaseSalvo ? parseFloat(valorBaseSalvo) : 0.00;
+            let valorBaseIndividual = valorBaseIndividualSalvo ? parseFloat(valorBaseIndividualSalvo) : 0.00;
+            
+            // Base da Empresa
+            inputBase.value = formatarMoeda(valorBase);
+            if (!isVisible) {
+                inputBase.classList.add('oculto-input');
+                inputBase.placeholder = 'R$ ***,**'; 
+                // Máscara de Ajuste
+                inputAjuste.placeholder = 'R$ ***,**'; 
+            } else {
+                inputBase.classList.remove('oculto-input');
+                inputBase.placeholder = 'Valor Inicial (Base Empresa)';
+                // Volta o placeholder original do ajuste
+                inputAjuste.placeholder = 'Ajuste do Dia (Entrada ou Saída)';
+            }
+            
+            // Base Individual (Nome configurado)
+            inputBaseIndividual.value = formatarMoeda(valorBaseIndividual);
+            if (!isVisible) {
+                inputBaseIndividual.classList.add('oculto-input');
+                inputBaseIndividual.placeholder = 'R$ ***,**'; 
+                // Máscara de Ajuste Individual
+                inputAjusteIndividual.placeholder = 'R$ ***,**';
+            } else {
+                inputBaseIndividual.classList.remove('oculto-input');
+                inputBaseIndividual.placeholder = `Valor Base ${settings.nomeColaboradorIndividual}`;
+                // Volta o placeholder original do ajuste individual
+                inputAjusteIndividual.placeholder = `Ajuste ${settings.nomeColaboradorIndividual} (Entrada ou Saída)`;
+            }
+            
+            // Limpa o campo de ajuste individual ao carregar (para evitar re-aplicação)
+            inputAjuste.value = '';
+            inputAjusteIndividual.value = '';
+        }
+
+        // --- FUNÇÕES DE HISTÓRICO E EDIÇÃO ---
+        
+        /** Exclui um registro individualmente do histórico. */
+        function deletarRegistro(id) {
+            if (!confirm(`Tem certeza que deseja excluir o registro de ID ${id} permanentemente?`)) {
+                return;
+            }
+
+            const historicoString = localStorage.getItem(CHAVE_HISTORICO);
+            let historico = historicoString ? JSON.parse(historicoString) : [];
+
+            // Filtra o histórico, mantendo apenas os registros que NÃO correspondem ao ID
+            historico = historico.filter(registro => registro.id !== id);
+
+            localStorage.setItem(CHAVE_HISTORICO, JSON.stringify(historico));
+
+            // Remove o item da lista exibida (melhor performance)
+            const item = document.getElementById(`registro-${id}`);
+            if (item) {
+                item.remove();
+            }
+            
+            // Atualiza a mensagem se a lista ficar vazia
+            if (historico.length === 0) {
+                document.getElementById('historico-lista').innerHTML = "<p>Nenhum fechamento registrado ainda.</p>";
+            }
+        }
+
+        /** Carrega os valores de um registro para os campos principais para que o usuário possa re-calcular/editar. */
+        function carregarParaEdicao(id) {
+            if (!confirm("Ao carregar um registro para edição, o registro original será DELETADO, e os valores serão colocados nos campos 'Base Empresa' e 'Base Gean'. Você deve recalcular e fechar o dia novamente. Continuar?")) {
+                return;
+            }
+            
+            const historicoString = localStorage.getItem(CHAVE_HISTORICO);
+            let historico = historicoString ? JSON.parse(historicoString) : [];
+            
+            const registro = historico.find(r => r.id === id);
+            
+            if (!registro) {
+                alert("Registro não encontrado.");
+                return;
+            }
+
+            // 1. Carrega os valores para os campos de Base (o ajuste deve ser sempre 0, pois a edição começa da base)
+            localStorage.setItem(CHAVE_BASE, registro.valorBase.toFixed(2));
+            localStorage.setItem(CHAVE_BASE_INDIVIDUAL, registro.valorBaseIndividual.toFixed(2));
+            
+            // 2. Deleta o registro original do histórico
+            deletarRegistro(id);
+            
+            // 3. Fecha o modal e recarrega os valores na interface principal
+            fecharModal('historico-modal');
+            carregarValoresSalvos(); 
+            
+            alert(`Valores do fechamento de ${registro.data} carregados para edição. Ajuste o valor de Ajuste e clique em 'Calcular e Atualizar', e depois 'Fechar Dia'.`);
+        }
+
+
+        /** Carrega e exibe o histórico de fechamentos. */
+        function exibirHistorico() {
+            const historicoString = localStorage.getItem(CHAVE_HISTORICO);
+            const historicoLista = document.getElementById('historico-lista');
+            
+            if (!historicoString || JSON.parse(historicoString).length === 0) {
+                historicoLista.innerHTML = "<p>Nenhum fechamento registrado ainda.</p>";
+                return;
+            }
+            
+            const historico = JSON.parse(historicoString);
+            
+            let html = '';
+            historico.forEach(registro => {
+                // Usa a versão mais atualizada dos nomes no histórico (garantindo compatibilidade com registros antigos)
+                const nome1 = registro.nomeColaborador1 || settings.nomeColaborador1;
+                const nome2 = registro.nomeColaborador2 || settings.nomeColaborador2;
+                const nomeGean = registro.nomeColaboradorIndividual || settings.nomeColaboradorIndividual;
+                const taxaVariavelPercent = (settings.taxaComissao * 100).toFixed(0);
+                const taxaIndividualPercent = (TAXA_COMISSAO_GEAN * 100).toFixed(0);
+
+                html += `
+                    <div class="historico-item" id="registro-${registro.id}" style="border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 5px; margin-bottom: 10px;">
+                        <strong style="display: block; margin-bottom: 5px;">Fechamento do dia: ${registro.data}</strong>
+                        
+                        <div style="display: flex; justify-content: space-between; gap: 5px; margin-bottom: 10px;">
+                             <button style="flex-grow: 1; padding: 5px; background-color: var(--cor-alerta); color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.9em; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#c82333'" onmouseout="this.style.backgroundColor='var(--cor-alerta)'" onclick="deletarRegistro(${registro.id})">
+                                <i class="fas fa-trash-alt"></i> Excluir
+                            </button>
+                             <button style="flex-grow: 1; padding: 5px; background-color: var(--cor-detalhe-claro); color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.9em; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#144061'" onmouseout="this.style.backgroundColor='var(--cor-detalhe-claro)'" onclick="carregarParaEdicao(${registro.id})">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                        </div>
+
+                        <hr style="border-color: rgba(255,255,255,0.1); margin: 8px 0;"/>
+                        
+                        <p style="opacity: 0.9; margin: 0; padding: 5px 0;">Base Empresa: <span class="valor">${formatarMoeda(registro.valorBase)}</span></p>
+                        <span>Comissão Total (${taxaVariavelPercent}%): <span class="valor total-sistema">${formatarMoeda(registro.comissaoTotal)}</span></span>
+                        
+                        <p style="margin: 5px 0;">${nome1}: <span class="valor">${formatarMoeda(registro.comissaoDividida)}</span></p>
+                        <p style="margin: 5px 0;">${nome2}: <span class="valor">${formatarMoeda(registro.comissaoDividida)}</span></p>
+                        
+                        <hr style="border-color: var(--cor-individual); margin: 8px 0;"/>
+                        
+                        <p style="color: var(--cor-individual); font-weight: 600; margin: 0; padding: 5px 0;">
+                            ${nomeGean} (${taxaIndividualPercent}%): ${formatarMoeda(registro.comissaoGean)} 
+                            <span style="display: block; font-size: 0.8em; opacity: 0.8; font-weight: 400; color: var(--cor-texto-claro);"> (Base ${nomeGean}: ${formatarMoeda(registro.valorBaseIndividual)})</span>
+                        </p>
+                    </div>
+                `;
+            });
+
+            historicoLista.innerHTML = html;
+        }
+
+        /** Registra o fechamento no histórico. */
+        function registrarFechamento(registro) {
+            const historicoString = localStorage.getItem(CHAVE_HISTORICO);
+            const historico = historicoString ? JSON.parse(historicoString) : [];
+            
+            const novoRegistro = {
+                // Usa Date.now() para garantir um ID único para exclusão
+                id: Date.now(), 
+                data: new Date().toLocaleDateString('pt-BR'),
+                ...registro 
+            };
+            
+            historico.unshift(novoRegistro);
+            localStorage.setItem(CHAVE_HISTORICO, JSON.stringify(historico));
+        }
+
+
+        /** Limpa o histórico salvo permanentemente. */
+        function limparHistoricoPermanente() {
+            if (confirm("ATENÇÃO: Você realmente deseja APAGAR TODO o histórico de fechamentos salvo no navegador? Esta ação não pode ser desfeita.")) {
+                localStorage.removeItem(CHAVE_HISTORICO);
+                exibirHistorico();
+                alert("Histórico limpo com sucesso.");
+            }
+        }
+        
+        // --- FUNÇÕES PRINCIPAIS DE CÁLCULO E FECHAMENTO ---
+
+        /**
+         * Realiza todos os cálculos e atualiza os Valores Iniciais.
+         */
+        function calcular() {
+            // Usa as referências globais de DOM
+            const valorBase = parseMoedaParaFloat($inputBase.value);
+            const ajusteValor = parseMoedaParaFloat($inputAjuste.value);
+            const valorBaseIndividual = parseMoedaParaFloat($inputBaseIndividual.value);
+            const ajusteValorIndividual = parseMoedaParaFloat($inputAjusteIndividual.value); 
+
+            if (valorBase < 0 || valorBaseIndividual < 0) {
+                $resultadoDiv.innerHTML = "<p style='color: #dc3545;'>Nenhum Valor Base pode ser negativo.</p>";
+                return;
+            }
+            
+            const taxaVariavel = settings.taxaComissao;
+            const nome1 = settings.nomeColaborador1;
+            const nome2 = settings.nomeColaborador2;
+            const nomeGean = settings.nomeColaboradorIndividual;
+            
+            // --- CÁLCULO DO FLUXO DA EMPRESA ---
+            const valorFinal = valorBase + ajusteValor;
+            const comissaoTotal = valorFinal * taxaVariavel;
+            const comissaoDividida = comissaoTotal / 2;
+            
+            // --- CÁLCULO DO FLUXO INDIVIDUAL (GEAN) ---
+            const valorFinalIndividual = valorBaseIndividual + ajusteValorIndividual;
+            const comissaoIndividual = valorFinalIndividual * TAXA_COMISSAO_GEAN;
+            
+            const getValorHTML = (valor) => `<span class="valor-exibir">${formatarMoeda(valor)}</span>`;
+            
+            // 1. EXIBIÇÃO DO RESULTADO 
+            $resultadoDiv.innerHTML = `
+                <p>Valor de Início (Empresa): ${getValorHTML(valorBase)}</p>
+                <p>Ajuste (Empresa): ${getValorHTML(ajusteValor)}</p>
+                <p style="font-size: 1.2em; font-weight: 700; border-bottom: none;">Novo Valor Base (Empresa): <span class="highlight">${getValorHTML(valorFinal)}</span></p>
+                
+                <p style="font-weight: 600; border-top: 1px solid rgba(255,255,255,0.2); margin-top: 10px; padding-top: 10px;">Comissão Total (${(taxaVariavel * 100).toFixed(0)}%): <span class="total-sistema">${getValorHTML(comissaoTotal)}</span></p>
+                
+                <p>${nome1}: <span class="valor-colaborador">${getValorHTML(comissaoDividida)}</span></p>
+                <p style="border-bottom: 1px solid rgba(255,255,255,0.1);">${nome2}: <span class="valor-colaborador">${getValorHTML(comissaoDividida)}</span></p>
+
+                <hr style="border-color: var(--cor-individual); margin: 10px 0;"/>
+                <p style="color: var(--cor-individual); font-weight: 600;">Base ${nomeGean} Início: ${getValorHTML(valorBaseIndividual)}</p>
+                <p style="color: var(--cor-individual); font-weight: 600;">Ajuste ${nomeGean}: ${getValorHTML(ajusteValorIndividual)}</p>
+                <p style="color: var(--cor-individual); font-weight: 700; font-size: 1.2em;">Novo Base ${nomeGean}: ${getValorHTML(valorFinalIndividual)}</p>
+                <p style="color: var(--cor-individual); font-weight: 700;">Comissão ${nomeGean} (20%): ${getValorHTML(comissaoIndividual)}</p>
+            `;
+            
+            // 2. ATUALIZAÇÃO DO FLUXO
+            $inputBase.value = formatarMoeda(valorFinal); 
+            $inputBaseIndividual.value = formatarMoeda(valorFinalIndividual); 
+            $inputAjuste.value = ''; 
+            $inputAjusteIndividual.value = ''; 
+
+            // 3. SALVAR NO LOCALSTORAGE (SÓ OS VALORES FLOAT LIMPOS)
+            localStorage.setItem(CHAVE_BASE, valorFinal.toFixed(2));
+            localStorage.setItem(CHAVE_BASE_INDIVIDUAL, valorFinalIndividual.toFixed(2));
+            
+            carregarValoresSalvos();
+        }
+
+
+        /**
+         * Gera o conteúdo do relatório em texto, registra o fechamento, e limpa a base.
+         */
+        function salvarPDFeFecharDia() {
+            // Recarrega as configurações para garantir o uso dos nomes corretos
+            carregarConfiguracoes();
+            
+            // Usa as referências globais de DOM
+            const ultimoValorBase = parseMoedaParaFloat($inputBase.value);
+            const ultimoValorBaseIndividual = parseMoedaParaFloat($inputBaseIndividual.value);
+            
+            if (ultimoValorBase === 0 && ultimoValorBaseIndividual === 0) {
+                 alert("Ambos os Valores Base estão zerados. Não há dados para fechar o dia.");
+                 return;
+            }
+
+            if (!confirm("Confirmar Fechamento? O relatório de texto será gerado, a comissão registrada e as bases zeradas.")) {
+                return;
+            }
+            
+            // NOVO: 1. Desabilita o botão para prevenir múltiplos cliques
+            $closeDayBtn.disabled = true;
+            $closeDayBtn.textContent = 'Processando...';
+
+            // Usa as configurações salvas (agora garantidas)
+            const taxaVariavel = settings.taxaComissao;
+            const nome1 = settings.nomeColaborador1;
+            const nome2 = settings.nomeColaborador2;
+            const nomeGean = settings.nomeColaboradorIndividual;
+
+            // Cálculos da Empresa
+            const comissaoTotal = ultimoValorBase * taxaVariavel;
+            const comissaoDividida = comissaoTotal / 2;
+
+            // Cálculo Individual (20% sobre a Base Individual)
+            const comissaoGean = ultimoValorBaseIndividual * TAXA_COMISSAO_GEAN;
+
+
+            // Obtém a data completa para o relatório
+            const dataRelatorio = exibirDataAtual(); 
+            
+            // 2. REGISTRA O FECHAMENTO ANTES DE ZERAR A BASE
+            const registroHistorico = {
+                valorBase: ultimoValorBase,
+                valorBaseIndividual: ultimoValorBaseIndividual, 
+                comissaoTotal: comissaoTotal,
+                comissaoDividida: comissaoDividida,
+                comissaoGean: comissaoGean,
+                // Armazena os nomes usados no momento do fechamento para consistência histórica
+                nomeColaborador1: nome1,
+                nomeColaborador2: nome2,
+                nomeColaboradorIndividual: nomeGean
+            };
+            registrarFechamento(registroHistorico);
+            
+            // 3. CONSTRUÇÃO DO CONTEÚDO EM TEXTO SIMPLES (Para download)
+            const relatorioTexto = `
+RELATÓRIO DE FECHAMENTO DE DIA - LUBRI EXPRESS
+
+Data: ${dataRelatorio}
+--------------------------------------------------
+BASE EMPRESA FINAL: ${formatarMoeda(ultimoValorBase)}
+COMISSÃO TOTAL EMPRESA (${(taxaVariavel * 100).toFixed(0)}%): ${formatarMoeda(comissaoTotal)}
+--------------------------------------------------
+Comissão ${nome1}: ${formatarMoeda(comissaoDividida)}
+Comissão ${nome2}: ${formatarMoeda(comissaoDividida)}
+--------------------------------------------------
+CÁLCULO ${nomeGean}
+BASE DE CÁLCULO ${nomeGean}: ${formatarMoeda(ultimoValorBaseIndividual)}
+COMISSÃO ${nomeGean} (${(TAXA_COMISSAO_GEAN * 100).toFixed(0)}%): ${formatarMoeda(comissaoGean)}
+--------------------------------------------------
+Documento gerado automaticamente.
+            `.trim();
+            
+            // 4. FORÇAR O DOWNLOAD DO ARQUIVO .TXT
+            const dataFileName = new Date().toISOString().slice(0, 10).replace(/-/g, '_');
+            const nomeArquivo = `COMISSAO_LUBRIEXPRESS_${dataFileName}.txt`; 
+            
+            const blob = new Blob([relatorioTexto], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            a.href = url;
+            a.download = nomeArquivo;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url); 
+            
+            // 5. RESETAR A BASE APÓS O DOWNLOAD E REGISTRO
+            localStorage.removeItem(CHAVE_BASE);
+            localStorage.removeItem(CHAVE_BASE_INDIVIDUAL); 
+            $inputAjuste.value = ''; // Usa a ref global
+            $inputAjusteIndividual.value = ''; // Usa a ref global
+            $resultadoDiv.innerHTML = "<p style='color: var(--cor-sucesso);'>Fechamento de dia concluído, comissão registrada e bases zeradas.</p>";
+            
+            carregarValoresSalvos(); 
+            
+            // NOVO: 6. Reabilita o botão após a conclusão
+            setTimeout(() => {
+                $closeDayBtn.disabled = false;
+                $closeDayBtn.textContent = 'Fechar Dia';
+            }, 1500); // Dá um tempo para o usuário ver o feedback e o download começar.
+        }
+        
+        /**
+         * Adiciona o evento de 'Enter' aos campos de input.
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            // Usa as referências globais de DOM
+            const inputBase = $inputBase;
+            const inputAjuste = $inputAjuste;
+            const inputBaseIndividual = $inputBaseIndividual;
+            const inputAjusteIndividual = $inputAjusteIndividual;
+            
+            const checkEnter = (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    calcular();
+                }
+            };
+
+            inputBase.addEventListener('keydown', checkEnter);
+            inputAjuste.addEventListener('keydown', checkEnter);
+            inputBaseIndividual.addEventListener('keydown', checkEnter);
+            inputAjusteIndividual.addEventListener('keydown', checkEnter);
+        });
+    </script>
+
+</body>
+</html>
